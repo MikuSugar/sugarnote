@@ -218,6 +218,18 @@ guard iconutil.terminationStatus == 0 else {
     exit(1)
 }
 
+// 落地页（docs/index.html）要用一张小图，顺手从 iconset 里拷一份过去。
+// 1254px 的原图有 1.5MB，放网页上太重了。
+let docsDirectory = root.appendingPathComponent("docs", isDirectory: true)
+if FileManager.default.fileExists(atPath: docsDirectory.path) {
+    let source = iconsetURL.appendingPathComponent("icon_256x256.png")
+    let destination = docsDirectory.appendingPathComponent("icon.png")
+    try? FileManager.default.removeItem(at: destination)
+    if (try? FileManager.default.copyItem(at: source, to: destination)) != nil {
+        print("已更新落地页图标 docs/icon.png")
+    }
+}
+
 let attributes = try? FileManager.default.attributesOfItem(atPath: outputURL.path)
 let byteSize = (attributes?[.size] as? Int) ?? 0
 print("已写入 \(outputURL.path)（\(byteSize / 1024) KB）")

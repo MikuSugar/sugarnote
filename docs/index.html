@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>sugarnote — 给 macOS 备忘录加上 Markdown 快捷输入</title>
+<meta name="description" content="在 Apple Notes 里正常打字，识别到 Markdown 语法就地转成备忘录原生富文本。开源，MIT，不注入、不记录按键、不联网。">
+<meta property="og:title" content="sugarnote">
+<meta property="og:description" content="给 macOS 备忘录加上 Markdown 快捷输入。">
+<meta property="og:image" content="icon.png">
+<meta name="theme-color" content="#F4C164">
+<link rel="icon" href="icon.png">
+<style>
+  :root {
+    --gold-deep: #E0AC48;
+    --gold: #F4C164;
+    --gold-soft: #F8DEA5;
+    --gold-pale: #FBF0D6;
+    --cream: #FAF1DA;
+    --brown: #66391A;
+    --brown-soft: #8A6039;
+    --ink: #2E2A24;
+    --ink-soft: #6B6155;
+    --line: rgba(102, 57, 26, .14);
+    --card: #FFFDF8;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    font: 16px/1.7 -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+          "Microsoft YaHei", system-ui, sans-serif;
+    color: var(--ink);
+    background:
+      radial-gradient(1200px 600px at 15% -10%, var(--gold-pale) 0%, transparent 60%),
+      radial-gradient(900px 500px at 95% 5%, #FFF3DC 0%, transparent 55%),
+      #FFFCF5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: var(--brown); text-underline-offset: 3px; }
+  a:hover { color: var(--gold-deep); }
+
+  .wrap { max-width: 920px; margin: 0 auto; padding: 0 24px; }
+
+  /* ── 头部 ─────────────────────────────── */
+  header {
+    text-align: center;
+    padding: 88px 0 56px;
+  }
+  header img {
+    width: 132px; height: 132px;
+    filter: drop-shadow(0 14px 28px rgba(160, 110, 30, .28));
+  }
+  h1 {
+    font-size: clamp(38px, 7vw, 58px);
+    letter-spacing: -.03em;
+    margin: 26px 0 0;
+    color: var(--brown);
+  }
+  .tagline {
+    font-size: clamp(17px, 2.4vw, 20px);
+    color: var(--ink-soft);
+    margin: 14px auto 0;
+    max-width: 34em;
+  }
+  .buttons { margin-top: 34px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 24px; border-radius: 999px;
+    font-weight: 600; font-size: 15px; text-decoration: none;
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn-primary {
+    color: #fff;
+    background: linear-gradient(180deg, var(--gold) 0%, var(--gold-deep) 100%);
+    box-shadow: 0 8px 20px rgba(190, 130, 40, .32);
+  }
+  .btn-ghost {
+    color: var(--brown);
+    background: #fff;
+    border: 1px solid var(--line);
+    box-shadow: 0 4px 12px rgba(160, 120, 60, .12);
+  }
+  .meta {
+    margin-top: 20px; font-size: 13.5px; color: var(--ink-soft);
+  }
+
+  /* ── 转换演示 ─────────────────────────── */
+  .demo {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 20px;
+    margin: 8px 0 72px;
+  }
+  .demo-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 26px 24px;
+    box-shadow: 0 10px 30px rgba(170, 130, 70, .10);
+    min-height: 118px;
+  }
+  .demo-label {
+    font-size: 12px; font-weight: 600; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--ink-soft);
+    margin-bottom: 14px;
+  }
+  .demo-line { font-size: 19px; }
+  .demo-line + .demo-line { margin-top: 8px; }
+  .demo-arrow { font-size: 26px; color: var(--gold-deep); }
+  .syn { color: var(--brown-soft); font-family: var(--mono); font-size: 17px; }
+  .b { font-weight: 700; }
+  .i { font-style: italic; }
+  .u { text-decoration: underline; }
+  .s { text-decoration: line-through; color: var(--ink-soft); }
+  .hl { background: #F3DDFF; border-radius: 3px; padding: 0 2px; }
+  .code { font-family: var(--mono); font-size: 15px; background: rgba(102,57,26,.07); padding: 1px 5px; border-radius: 4px; }
+  .h1 { font-size: 26px; font-weight: 700; }
+  .h2 { font-size: 22px; font-weight: 700; }
+  .quote { border-left: 3px solid var(--gold); padding-left: 12px; color: var(--ink-soft); }
+  .todo::before { content: "☐ "; color: var(--brown-soft); }
+
+  /* ── 通用节 ───────────────────────────── */
+  section { margin: 0 0 72px; }
+  h2 {
+    font-size: 25px; letter-spacing: -.01em; color: var(--brown);
+    margin: 0 0 20px; padding-bottom: 12px; border-bottom: 1px solid var(--line);
+  }
+  h3 { font-size: 16px; margin: 26px 0 8px; color: var(--brown-soft); }
+  p { margin: 0 0 14px; }
+  ul { padding-left: 22px; margin: 0 0 14px; }
+  li { margin: 6px 0; }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 20px;
+  }
+  .card h3 { margin: 0 0 6px; font-size: 15.5px; color: var(--brown); }
+  .card p { margin: 0; font-size: 14.5px; color: var(--ink-soft); }
+
+  table { border-collapse: collapse; width: 100%; font-size: 15px; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+  th { font-size: 13px; letter-spacing: .04em; color: var(--ink-soft); font-weight: 600; }
+  td:first-child { font-family: var(--mono); font-size: 14px; color: var(--brown-soft); white-space: nowrap; }
+
+  .note {
+    background: var(--cream);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--gold);
+    border-radius: 10px;
+    padding: 16px 18px;
+    font-size: 14.5px;
+    color: var(--ink-soft);
+    margin: 18px 0;
+  }
+  .note strong { color: var(--brown); }
+
+  ol.steps { padding-left: 0; list-style: none; counter-reset: step; }
+  ol.steps > li {
+    counter-increment: step;
+    position: relative;
+    padding-left: 44px;
+    margin: 0 0 18px;
+  }
+  ol.steps > li::before {
+    content: counter(step);
+    position: absolute; left: 0; top: 1px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: linear-gradient(180deg, var(--gold) 0%, var(--gold-deep) 100%);
+    color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  code.block {
+    display: block;
+    font-family: var(--mono); font-size: 13.5px;
+    background: rgba(102,57,26,.06);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 13px;
+    margin: 8px 0;
+    overflow-x: auto;
+  }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 30px 0 50px;
+    font-size: 14px;
+    color: var(--ink-soft);
+    display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  }
+
+  @media (max-width: 680px) {
+    .demo { grid-template-columns: 1fr; }
+    .demo-arrow { transform: rotate(90deg); justify-self: center; }
+    header { padding: 60px 0 40px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header>
+    <img src="icon.png" alt="sugarnote">
+    <h1>sugarnote</h1>
+    <p class="tagline">
+      在 macOS 备忘录里正常打字。<br>
+      敲 Markdown，就地变成备忘录的原生富文本。
+    </p>
+    <div class="buttons">
+      <a class="btn btn-primary" href="https://github.com/MikuSugar/sugarnote/releases/latest">下载</a>
+      <a class="btn btn-ghost" href="https://github.com/MikuSugar/sugarnote">GitHub</a>
+    </div>
+    <p class="meta">macOS 27 · arm64 · MIT 开源 · 不需要联网</p>
+  </header>
+
+  <section>
+    <div class="demo">
+      <div class="demo-card">
+        <div class="demo-label">你敲的</div>
+        <div class="demo-line"><span class="syn">**明天要交的东西**</span></div>
+        <div class="demo-line"><span class="syn"># 会议纪要</span></div>
+        <div class="demo-line"><span class="syn">- [ ] 回复邮件</span></div>
+      </div>
+      <div class="demo-arrow">→</div>
+      <div class="demo-card">
+        <div class="demo-label">备忘录里的样子</div>
+        <div class="demo-line b">明天要交的东西</div>
+        <div class="demo-line h1">会议纪要</div>
+        <div class="demo-line todo">回复邮件</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>它是什么</h2>
+    <p>
+      不是新的笔记软件，是挂在备忘录旁边的辅助工具。你不换地方、不导数据、不同步两套东西——
+      照常打开备忘录写字，只是能敲 Markdown。
+    </p>
+    <p>
+      它是 <a href="https://www.pronotes.app">ProNotes</a> 的替代品。ProNotes 已经停止维护，
+      在 macOS 27 上因为它把备忘录的菜单标题按系统版本硬编码了、而 Apple 改了菜单名而失效。
+      sugarnote 改成运行时现学菜单结构，不再依赖版本表。
+    </p>
+
+    <div class="cards" style="margin-top:24px">
+      <div class="card">
+        <h3>不注入、不修改备忘录</h3>
+        <p>靠系统辅助功能读光标位置，识别到语法后触发备忘录自己的格式化菜单。备忘录本体没被动过。</p>
+      </div>
+      <div class="card">
+        <h3>不记录按键</h3>
+        <p>订阅的是「正文变了」这个通知，不是键盘事件。看不到你按了什么键。</p>
+      </div>
+      <div class="card">
+        <h3>不联网</h3>
+        <p>没有网络请求，没有账号，没有遥测。所有判断都在本机完成。</p>
+      </div>
+      <div class="card">
+        <h3>兼容输入法</h3>
+        <p>从文本状态判断而不是从按键判断，所以用中文输入法拼字时不会误触发。</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>支持的语法</h2>
+    <table>
+      <thead><tr><th>写法</th><th>效果</th></tr></thead>
+      <tbody>
+        <tr><td>**文字**</td><td>粗体</td></tr>
+        <tr><td>*文字*　_文字_</td><td>斜体</td></tr>
+        <tr><td>__文字__</td><td>下划线</td></tr>
+        <tr><td>~~文字~~</td><td>删除线</td></tr>
+        <tr><td>`文字`</td><td>行内代码</td></tr>
+        <tr><td>==文字==</td><td>高亮</td></tr>
+        <tr><td># 　## 　###</td><td>标题 / 小标题 / 副标题</td></tr>
+        <tr><td>&gt; </td><td>块引用</td></tr>
+        <tr><td>[ ] 　[x]</td><td>核对清单</td></tr>
+        <tr><td>```</td><td>等宽段落</td></tr>
+        <tr><td>*** 　___</td><td>分隔线</td></tr>
+      </tbody>
+    </table>
+    <div class="note">
+      <strong>行内语法敲完闭合的那一半就自动转换。</strong>想撤销按 ⌘Z——一次就能退回 Markdown 原文。<br><br>
+      行首的 <code>- </code>、<code>1. </code> 不用 sugarnote 处理，备忘录自带的智能列表本来就会转。
+      分隔线推荐写 <code>***</code> 或 <code>___</code>：<code>---</code> 会被备忘录的智能破折号变成破折号。
+    </div>
+  </section>
+
+  <section>
+    <h2>安装</h2>
+    <ol class="steps">
+      <li>
+        从 <a href="https://github.com/MikuSugar/sugarnote/releases/latest">Releases</a> 下载 DMG，
+        把 <strong>sugarnote.app</strong> 拖进「应用程序」。
+        <div class="note" style="margin:10px 0 0">
+          一定要先拖进去再运行。直接从 DMG 里双击的话，macOS 会把它放到一个随机只读路径执行，功能会不正常。
+        </div>
+      </li>
+      <li>
+        双击打开一次——会被系统拦下，这是正常的。然后放行：
+        <div class="note" style="margin:10px 0 0">
+          <strong>图形界面</strong>：打开「系统设置 &gt; 隐私与安全性」，往下滚到「安全性」一节，
+          点「已阻止使用 sugarnote.app」右边的<strong>仍要打开</strong>。<br><br>
+          <strong>或者终端一条命令</strong>：
+          <code class="block">xattr -d com.apple.quarantine /Applications/sugarnote.app</code>
+          这个 App 没有付费开发者账号签名、也没公证，所以会被 Gatekeeper 拦。<strong>所有没付费签名的开源 macOS 应用都这样</strong>，不是它特有的问题。
+        </div>
+      </li>
+      <li>
+        它会申请辅助功能权限。在「隐私与安全性 &gt; 辅助功能」里把 <strong>sugarnote</strong> 打开。
+        <div class="note" style="margin:10px 0 0">
+          打开开关后<strong>不用重启 App</strong>，它每 2 秒会自己重查一次，菜单栏图标从 ✗ 变 ✓ 就是就绪了。
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>用法建议</h2>
+    <p>
+      它只在备忘录打开时才有意义。用「快捷指令」的自动化把它和备忘录绑在一起，省得手动开关：
+    </p>
+    <ul>
+      <li>备忘录<strong>已打开</strong> → 打开 App → sugarnote</li>
+      <li>备忘录<strong>已关闭</strong> → 退出 App → sugarnote</li>
+    </ul>
+    <div class="note">
+      每条自动化都要把「运行前询问」改成<strong>立即运行</strong>，否则每次开备忘录都会弹一下问你要不要跑，
+      那就跟没自动化一样了。
+    </div>
+    <p>
+      想从源码构建的话，仓库里有完整步骤（SwiftPM，无第三方运行时依赖）。
+    </p>
+  </section>
+
+  <section>
+    <h2>已知限制</h2>
+    <ul>
+      <li>转换在你停手约 150 毫秒后触发。这个去抖是必须的——不然转换会和你的连续输入抢光标位置，把字打乱。</li>
+      <li>表格、链接、整块 Markdown 转换还没做。</li>
+      <li>撤销偶尔需要按两次，取决于备忘录自己的编辑分组方式。</li>
+      <li>只提供 arm64 构建。</li>
+    </ul>
+  </section>
+
+  <footer>
+    <div>MIT 协议开源 · <a href="https://github.com/MikuSugar/sugarnote">MikuSugar/sugarnote</a></div>
+    <div><a href="https://github.com/MikuSugar/sugarnote/issues">反馈问题</a></div>
+  </footer>
+
+</div>
+
+</body>
+</html>
