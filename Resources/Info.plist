@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>zh_CN</string>
+	<key>CFBundleExecutable</key>
+	<string>sugarnote</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.mikusugar.sugarnote</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>sugarnote</string>
+	<key>CFBundleDisplayName</key>
+	<string>sugarnote</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>0.1.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>CFBundleIconFile</key>
+	<string>AppIcon</string>
+	<key>CFBundleIconName</key>
+	<string>AppIcon</string>
+
+	<key>LSMinimumSystemVersion</key>
+	<string>14.0</string>
+
+	<!-- 菜单栏 App：不进 Dock、不占 Command-Tab -->
+	<key>LSUIElement</key>
+	<true/>
+
+	<!-- 用途说明：用辅助功能读写备忘录正文、触发它的菜单项 -->
+	<key>NSAccessibilityUsageDescription</key>
+	<string>sugarnote 需要通过辅助功能读取备忘录正文的光标位置、并在识别到 Markdown 语法时触发备忘录自己的格式化菜单。它不会记录你的按键，也不会把内容发到任何地方。</string>
+
+	<key>NSHumanReadableCopyright</key>
+	<string>Copyright © 2026 sugarnote</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.productivity</string>
+	<key>NSSupportsAutomaticTermination</key>
+	<false/>
+	<key>NSSupportsSuddenTermination</key>
+	<false/>
+</dict>
+</plist>

@@ -1,0 +1,20 @@
+# 构建产物
+.build/
+build/
+
+# 生成的应用图标。由 Tools/make-icon.swift 从 Resources/AppIcon-source.png 生成，
+# build-app.sh 会自动跑，不需要进仓库。
+Resources/AppIcon.icns
+
+# 探测工具写出来的临时文件
+menudump.json
+axprobe-menus.json
+
+# macOS
+.DS_Store
+._*
+
+# SwiftPM / Xcode 本地状态
+.swiftpm/
+xcuserdata/
+*.xcuserstate
