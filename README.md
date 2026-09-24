@@ -7,6 +7,20 @@ ProNotes 的替代品。ProNotes 已停止维护，在 macOS 27 上因为按版�
 
 MIT 协议开源。
 
+## 下载
+
+不想从源码编译的话，去 [Releases](https://github.com/MikuSugar/sugarnote/releases/latest) 下 DMG。
+
+装了之后首次打开会被 Gatekeeper 拦下——**这是所有没有付费开发者账号的开源 macOS 应用的通病**，
+不是这个项目特有的。放行一次即可：
+
+1. 把 `sugarnote.app` 拖进 Applications（一定要先拖进去再运行，直接从 DMG 里跑会被放到随机只读路径）
+2. 双击运行一次让它被拦，然后到「系统设置 > 隐私与安全性」，往下滚到「安全性」一节点「仍要打开」
+   （或者终端：`xattr -d com.apple.quarantine /Applications/sugarnote.app`）
+3. 在「隐私与安全性 > 辅助功能」里把 sugarnote 打开
+
+当前只提供 arm64 构建。
+
 > **它是怎么碰到你的笔记的**：靠 macOS 的辅助功能接口读取备忘录正文的光标位置，
 > 识别到 Markdown 语法后触发备忘录自己的格式化菜单（AXPress）。它**不注入、不修改备忘录**，
 > 也不记录你的按键、不联网。所有逻辑都在本机，正文内容不会离开这台电脑。
