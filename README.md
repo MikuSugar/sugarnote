@@ -138,8 +138,9 @@ Markdown 文本会继承光标处的打字属性——用户正在粗体里打�
    「文件 > 新建备忘录」），新建后仍非空就直接退出，绝不"清理"用户已有内容。
 3. **测试跑完把正文长度恢复到测试前的值**，并打印出来。
 
-这条规则的来由见 `Sources/SugarNoteCLI/SelfTest.swift` 顶部的注释：第一版自检假设
-`⌘N` 会新建笔记，但合成的按键没生效，结果跑进了用户的真实笔记，清理时又整篇清空。
+这些规则不是预防性的，是被事故逼出来的：早期版本的自检假设「`⌘N` 一定会新建笔记」，
+但合成按键其实触发不了菜单快捷键，于是测试跑进了当时打开的真实笔记，清理时又按整篇长度
+做了替换。护栏是针对那个根因加的，`Sources/SugarNoteCLI/SelfTest.swift` 顶部有完整记录。
 
 ## 构建与运行
 
@@ -188,15 +189,16 @@ security add-trusted-cert -d -r trustRoot \
 ### 为什么必须先建签名身份
 
 **ad-hoc 签名的 App 每次重新构建都会换 cdhash，而辅助功能授权是按 cdhash 记的——
-等于每改一行代码就要去系统设置里重新授权一次。** 这个坑我实际踩过：给 App 加了个图标、
-重建两次，用户刚授的权限就失效了，App 表现得像「完全不能用」。
+等于每改一行代码就要去系统设置里重新授权一次。** 典型症状是：重新构建后 App 一直显示
+「需要辅助功能权限」，但系统设置里它的开关明明是打开的（那条记录对不上新二进制了）。
+更麻烦的是它看起来完全不像授权问题，容易往别处查。
 
 `scripts/setup-dev-signing.sh` 在独立的 keychain 里自签一张代码签名证书（不动你登录
 keychain 里的任何东西），之后 `build-app.sh` 自动用它。这样签出来的 designated requirement
 锚定的是**证书哈希**而不是 cdhash，重新构建后授权依然有效：
 
 ```
-designated => identifier "com.mikusugar.sugarnote" and certificate leaf = H"d0b16474…"
+designated => identifier "com.mikusugar.sugarnote" and certificate leaf = H"<证书哈希>"
 ```
 
 要完全清理：`security delete-keychain ~/Library/Keychains/sugarnote-dev.keychain`
