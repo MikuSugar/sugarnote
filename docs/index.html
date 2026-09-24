@@ -138,7 +138,8 @@
   ul { padding-left: 22px; margin: 0 0 14px; }
   li { margin: 6px 0; }
 
-  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  /* 最小宽 300：容器内容宽约 872px，240px 会排成 3+1 不均衡，300px 正好两列 */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
   .card {
     background: var(--card);
     border: 1px solid var(--line);
@@ -294,7 +295,7 @@
     </table>
     <div class="note">
       <strong>行内语法敲完闭合的那一半就自动转换。</strong>想撤销按 ⌘Z——一次就能退回 Markdown 原文。<br><br>
-      行首的 <code>- </code>、<code>1. </code> 不用 sugarnote 处理，备忘录自带的智能列表本来就会转。
+      行首的 <code>-</code> 和 <code>1.</code> 这类列表标记不用 sugarnote 处理，备忘录自带的智能列表本来就会转。
       分隔线推荐写 <code>***</code> 或 <code>___</code>：<code>---</code> 会被备忘录的智能破折号变成破折号。
     </div>
   </section>
